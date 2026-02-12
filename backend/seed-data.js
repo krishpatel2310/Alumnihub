@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -41,7 +40,6 @@ const randomDate = (start, end) => {
 // Generate alumni users
 const generateAlumni = async (count) => {
   const alumni = [];
-  const hashedPassword = await bcrypt.hash('password123', 10);
   
   for (let i = 0; i < count; i++) {
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
@@ -51,7 +49,7 @@ const generateAlumni = async (count) => {
     alumni.push({
       name: `${firstName} ${lastName}`,
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@alumni.com`,
-      password: hashedPassword,
+      password: 'password123',
       role: 'alumni',
       avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${firstName}${lastName}`,
       bio: `Experienced ${jobTitles[Math.floor(Math.random() * jobTitles.length)]} with ${Math.floor(Math.random() * 10) + 2} years of experience in the tech industry.`,
@@ -75,7 +73,6 @@ const generateAlumni = async (count) => {
 // Generate students
 const generateStudents = async (count) => {
   const students = [];
-  const hashedPassword = await bcrypt.hash('password123', 10);
   
   for (let i = 0; i < count; i++) {
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
@@ -84,7 +81,7 @@ const generateStudents = async (count) => {
     students.push({
       name: `${firstName} ${lastName}`,
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@student.com`,
-      password: hashedPassword,
+      password: 'password123',
       role: 'student',
       avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${firstName}${lastName}`,
       bio: `${departments[Math.floor(Math.random() * departments.length)]} student passionate about technology and innovation.`,
