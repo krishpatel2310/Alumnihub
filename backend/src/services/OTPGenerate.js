@@ -2,6 +2,10 @@ import nodemailer from 'nodemailer';
 
 // Create transporter (note: createTransport, not createTransporter)
 const createTransporter = () => {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        throw new Error('Email credentials are not configured. Set EMAIL_USER and EMAIL_PASS.');
+    }
+
     return nodemailer.createTransport({  // Fixed: createTransport instead of createTransporter
         service: 'gmail',
         auth: {
@@ -15,7 +19,7 @@ const createTransporter = () => {
 export const sendOTPEmail = async (email, otp) => {
     try {
         const transporter = createTransporter();
-        
+
         const mailOptions = {
             from: {
                 name: 'College Name',
