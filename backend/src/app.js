@@ -61,4 +61,19 @@ app.use('/api/notifications', notificationRouter);
 app.use('/api/connections', connectionRouter);
 app.use('/api/messages', messageRouter);
 
+// Global error handler middleware - must be after all routes
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || "Something went wrong";
+    const errors = err.errors || [];
+
+    res.status(statusCode).json({
+        statusCode,
+        message,
+        errors,
+        success: false,
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+});
+
 export default app;
