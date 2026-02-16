@@ -17,6 +17,7 @@ import Communications from "./pages/Communications";
 import PostDetail from "./pages/PostDetail";
 import Connections from "./pages/Connections";
 import Settings from "./pages/Settings";
+import Resume from "./pages/Resume";
 import NotFound from "./pages/NotFound";
 
 // Auth pages
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="communications/post/:postId" element={<PostDetail />} />
               <Route path="connections" element={<Connections />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="resume" element={<Resume />} />
             </Route>
 
             {/* Protected Admin Routes - With Sidebar */}
