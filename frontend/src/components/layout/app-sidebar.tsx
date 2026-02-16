@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Flag,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -40,6 +41,7 @@ const baseNavigation = [
   { title: "Jobs", url: "/jobs", icon: Briefcase, color: "text-orange-500", activeColor: "bg-orange-500/10 text-orange-600 dark:text-orange-400" },
   { title: "Donations", url: "/donations", icon: Heart, color: "text-emerald-500", activeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
   { title: "Community Chat", url: "/communications", icon: MessageSquare, color: "text-indigo-500", activeColor: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" },
+  { title: "Resume Builder", url: "/resume", icon: FileText, color: "text-rose-500", activeColor: "bg-rose-500/10 text-rose-600 dark:text-rose-400" },
 ];
 
 const adminNavigation = [

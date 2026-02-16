@@ -107,6 +107,21 @@ export const userService = {
   }
 };
 
+// Resume Services
+export const resumeService = {
+  getDraft: async (): Promise<ApiResponse> => {
+    return await api.get('/resume/draft');
+  },
+
+  saveDraft: async (data: { templateId: string; answers?: any; content?: any; status?: string }): Promise<ApiResponse> => {
+    return await api.post('/resume/draft', data);
+  },
+
+  generateResume: async (data: { templateId: string; answers: any }): Promise<ApiResponse> => {
+    return await api.post('/resume/ai/generate', data);
+  }
+};
+
 // Admin Services
 export const adminService = {
   getCurrentAdmin: async (): Promise<ApiResponse> => {
