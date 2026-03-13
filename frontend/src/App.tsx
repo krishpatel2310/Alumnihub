@@ -19,6 +19,7 @@ import PostDetail from "./pages/PostDetail";
 import Connections from "./pages/Connections";
 import Settings from "./pages/Settings";
 import Recommendations from "./pages/Recommendations";
+import Resume from "./pages/Resume";
 import NotFound from "./pages/NotFound";
 
 // Auth pages
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="connections" element={<Connections />} />
               <Route path="settings" element={<Settings />} />
               <Route path="recommendations" element={<Recommendations />} />
+              <Route path="resume" element={<Resume />} />
             </Route>
 
             {/* Protected Admin Routes - With Sidebar */}

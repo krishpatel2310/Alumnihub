@@ -18,6 +18,7 @@ import {
   Flag,
   Sparkles,
   Globe,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -44,6 +45,7 @@ const baseNavigation = [
   { title: "AI Recommendations", url: "/recommendations", icon: Sparkles, color: "text-amber-500", activeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   { title: "Donations", url: "/donations", icon: Heart, color: "text-emerald-500", activeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
   { title: "Community Chat", url: "/communications", icon: MessageSquare, color: "text-indigo-500", activeColor: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" },
+  { title: "Resume Builder", url: "/resume", icon: FileText, color: "text-rose-500", activeColor: "bg-rose-500/10 text-rose-600 dark:text-rose-400" },
 ];
 
 const adminNavigation = [

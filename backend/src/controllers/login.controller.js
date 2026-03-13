@@ -100,17 +100,64 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 })
 
+const registerUser = asyncHandler(async (req, res) => {
+    const {
+        fullName,
+        email,
+        password,
+        role,
+        graduationYear,
+        expectedGradYear,
+        jobTitle,
+        linkedin,
+        github
+    } = req.body;
+
+    if (!fullName || !email || !password) {
+        throw new ApiError(400, "Full name, email, and password are required");
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+        throw new ApiError(409, "User already exists with this email");
+    }
+
+    const allowedRoles = ["alumni", "student"];
+    const safeRole = allowedRoles.includes(role) ? role : "student";
+
+    const parsedGradYear = graduationYear || expectedGradYear ? Number(graduationYear || expectedGradYear) : undefined;
+
+    const user = await User.create({
+        name: fullName,
+        email: normalizedEmail,
+        password,
+        role: safeRole,
+        graduationYear: Number.isNaN(parsedGradYear) ? undefined : parsedGradYear,
+        currentPosition: jobTitle || undefined,
+        linkedin: linkedin || undefined,
+        github: github || undefined
+    });
+
+    const createdUser = await User.findById(user._id).select('-password -refreshToken');
+
+    return res
+        .status(201)
+        .json(new ApiResponse(201, createdUser, "Registration successful"));
+});
+
 const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
     console.log('🔐 Login attempt:', { email, passwordLength: password?.length });
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
         throw new ApiError(400, "Email and password are required")
     }
 
-    const user = await User.findOne({ email });
-    const admin = await Admin.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
+    const admin = await Admin.findOne({ email: normalizedEmail });
 
     console.log('👤 User found:', !!user, 'Admin found:', !!admin);
 
@@ -240,13 +287,14 @@ const logout = asyncHandler(async (req, res) => {
 
 const forgotPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!email) {
+    if (!normalizedEmail) {
         throw new ApiError(400, "Email is required");
     }
 
-    const user = await User.findOne({ email });
-    const admin = await Admin.findOne({ email })
+    const user = await User.findOne({ email: normalizedEmail });
+    const admin = await Admin.findOne({ email: normalizedEmail })
 
     if (!user && !admin) {
         throw new ApiError(404, "User not found")
@@ -277,7 +325,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                const emailPromise = sendOTPEmail(email, otp);
+                const emailPromise = sendOTPEmail(normalizedEmail, otp);
                 const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error(`Email timeout after ${timeoutDuration / 1000}s (attempt ${attempt})`)), timeoutDuration)
                 );
@@ -300,16 +348,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
         }
 
         if (!emailResult || !emailResult.success) {
-            if (process.env.NODE_ENV === 'development' || process.env.SHOW_OTP_ON_FAIL === 'true') {
-                return res
-                    .status(200)
-                    .json(new ApiResponse(200, {
-                        devMode: true,
-                        message: "Email service temporarily unavailable. Check console for OTP.",
-                        otp: process.env.SHOW_OTP_IN_RESPONSE === 'true' ? otp : undefined
-                    }, "OTP generated (email service issue)"));
-            }
-
             if (user) {
                 user.resetPasswordOTP = undefined;
                 user.resetPasswordExpires = undefined;
@@ -344,19 +382,20 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
 const verifyOTP = asyncHandler(async (req, res) => {
     const { email, otp } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!email || !otp) {
+    if (!normalizedEmail || !otp) {
         throw new ApiError(400, "Email and OTP are required");
     }
 
     const user = await User.findOne({
-        email,
+        email: normalizedEmail,
         resetPasswordOTP: otp,
         resetPasswordExpires: { $gt: Date.now() }
     });
 
     const admin = await Admin.findOne({
-        email,
+        email: normalizedEmail,
         resetPasswordOTP: otp,
         resetPasswordExpires: { $gt: Date.now() }
     });
@@ -372,8 +411,9 @@ const verifyOTP = asyncHandler(async (req, res) => {
 
 const resetPassword = asyncHandler(async (req, res) => {
     const { email, newPassword, confirmPassword, otp } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!email || !newPassword || !confirmPassword || !otp) {
+    if (!normalizedEmail || !newPassword || !confirmPassword || !otp) {
         throw new ApiError(400, "All fields are required");
     }
 
@@ -386,13 +426,13 @@ const resetPassword = asyncHandler(async (req, res) => {
     }
 
     const user = await User.findOne({
-        email,
+        email: normalizedEmail,
         resetPasswordOTP: otp,
         resetPasswordExpires: { $gt: Date.now() }
     });
 
     const admin = await Admin.findOne({
-        email,
+        email: normalizedEmail,
         resetPasswordOTP: otp,
         resetPasswordExpires: { $gt: Date.now() }
     });
@@ -405,13 +445,13 @@ const resetPassword = asyncHandler(async (req, res) => {
         admin.password = newPassword;
         admin.resetPasswordOTP = undefined;
         admin.resetPasswordExpires = undefined;
-        await admin.save({ validateBeforeSave: false });
+        await admin.save();
     }
     if (user) {
         user.password = newPassword;
         user.resetPasswordOTP = undefined;
         user.resetPasswordExpires = undefined;
-        await user.save({ validateBeforeSave: false });
+        await user.save();
     }
 
     return res
@@ -420,6 +460,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 export {
+    registerUser,
     login,
     logout,
     forgotPassword,

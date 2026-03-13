@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/ApiServices";
-import { handleApiError , handleApiSuccess } from "@/services/ApiServices";
+import { handleApiError, handleApiSuccess } from "@/services/ApiServices";
 
 const resetPasswordSchema = z.object({
   newPassword: z
@@ -37,7 +37,7 @@ export const ResetPassword = () => {
   const email = location.state?.email;
   const otp = location.state?.otp;
 
-   useEffect(() => {
+  useEffect(() => {
     // Redirect to forgot password if no email or OTP
     if (!email || !otp) {
       navigate("/auth/forgot-password");
@@ -81,18 +81,18 @@ export const ResetPassword = () => {
     return "Strong";
   };
 
-  
+
   const onSubmit = async (data: ResetPasswordForm) => {
     setIsLoading(true);
     try {
-      const response = await authService.resetPassword(email, data.newPassword, otp);
-      
+      const response = await authService.resetPassword(email, data.newPassword, data.confirmPassword, otp);
+
       if (response.success) {
         toast({
           title: "Password reset successful",
           description: "Your password has been updated. You can now sign in.",
         });
-        
+
         // Navigate to login page
         navigate("/auth/login");
       }
@@ -109,7 +109,7 @@ export const ResetPassword = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -158,7 +158,7 @@ export const ResetPassword = () => {
                           </Button>
                         </div>
                       </FormControl>
-                      
+
                       {watchPassword && (
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
@@ -168,14 +168,13 @@ export const ResetPassword = () => {
                                 style={{ width: `${(passwordStrength / 5) * 100}%` }}
                               />
                             </div>
-                            <span className={`text-xs font-medium ${
-                              passwordStrength < 2 ? "text-destructive" : 
-                              passwordStrength < 4 ? "text-warning" : "text-success"
-                            }`}>
+                            <span className={`text-xs font-medium ${passwordStrength < 2 ? "text-destructive" :
+                                passwordStrength < 4 ? "text-warning" : "text-success"
+                              }`}>
                               {getStrengthText(passwordStrength)}
                             </span>
                           </div>
-                          
+
                           <div className="space-y-1 text-xs text-muted-foreground">
                             <div className={`flex items-center space-x-2 ${watchPassword.length >= 8 ? "text-success" : ""}`}>
                               <CheckCircle className={`h-3 w-3 ${watchPassword.length >= 8 ? "text-success" : "text-muted-foreground"}`} />
@@ -196,7 +195,7 @@ export const ResetPassword = () => {
                           </div>
                         </div>
                       )}
-                      
+
                       <FormMessage />
                     </FormItem>
                   )}

@@ -37,6 +37,12 @@ export const authService = {
     return response || response.data;
   },
 
+  register: async (formData: FormData): Promise<ApiResponse> => {
+    return await api.post('/register', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+
   logout: async (): Promise<ApiResponse> => {
     return await api.post('/logout');
   },
@@ -53,10 +59,11 @@ export const authService = {
     return await api.post('/refresh-token', { token: refreshToken });
   },
 
-  resetPassword: async (email: string, newPassword: string, otp: string): Promise<ApiResponse> => {
+  resetPassword: async (email: string, newPassword: string, confirmPassword: string, otp: string): Promise<ApiResponse> => {
     return await api.post('/reset-password', {
       email,
       newPassword,
+      confirmPassword,
       otp
     });
   }
@@ -120,6 +127,21 @@ export const userService = {
   },
 };
 
+// Resume Services
+export const resumeService = {
+  getDraft: async (): Promise<ApiResponse> => {
+    return await api.get('/resume/draft');
+  },
+
+  saveDraft: async (data: { templateId: string; answers?: any; content?: any; status?: string }): Promise<ApiResponse> => {
+    return await api.post('/resume/draft', data);
+  },
+
+  generateResume: async (data: { templateId: string; answers: any }): Promise<ApiResponse> => {
+    return await api.post('/resume/ai/generate', data);
+  }
+};
+
 // Admin Services
 export const adminService = {
   getCurrentAdmin: async (): Promise<ApiResponse> => {
@@ -175,10 +197,11 @@ export const adminService = {
     return await api.post('/admin/verify-otp', { email, otp });
   },
 
-  resetPassword: async (email: string, newPassword: string, otp: string): Promise<ApiResponse> => {
+  resetPassword: async (email: string, newPassword: string, confirmPassword: string, otp: string): Promise<ApiResponse> => {
     return await api.post('/admin/reset-password', {
       email,
       newPassword,
+      confirmPassword,
       otp
     });
   },
