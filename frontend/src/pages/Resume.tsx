@@ -312,11 +312,8 @@ const ProfessionalLayout = ({ resumeContent, isEditing, updateContent, updateCon
             {isEditing ? (
                 <Textarea value={(languages || []).map((item: any) => `${item.name || ""}${item.level ? ` - ${item.level}` : ""}`).join("\n")} onChange={(e) => updateContent("languages", parseLanguagesInput(e.target.value))} className="bg-transparent border-dashed text-xs" />
             ) : (
-                <div className="space-y-1.5">{(languages || []).map((item: any, i: number) => (
-                    <div key={`${item.name || "language"}-${i}`} className="flex items-center justify-between text-xs">
-                        <p className="font-semibold">{item.name}</p>
-                        {item.level && <p className="text-slate-600">{item.level}</p>}
-                    </div>
+                <div className="flex flex-wrap gap-1.5">{(languages || []).map((item: any, i: number) => (
+                    <span key={`${item.name || "language"}-${i}`} className="text-xs font-semibold">{item.name}</span>
                 ))}</div>
             )}
         </section>
@@ -755,48 +752,80 @@ export default function Resume() {
                             </div>
                         )}
 
-                        <Textarea
-                            placeholder="Professional summary (2-3 lines)"
-                            className="min-h-[90px]"
-                            value={answers.summary}
-                            onChange={(event) => setAnswers({ ...answers, summary: event.target.value })}
-                        />
-                        <Textarea
-                            placeholder="Education (one per line: School - Degree - Year)"
-                            className="min-h-[90px]"
-                            value={answers.education}
-                            onChange={(event) => setAnswers({ ...answers, education: event.target.value })}
-                        />
-                        <Textarea
-                            placeholder="Skills (comma separated)"
-                            className="min-h-[80px]"
-                            value={answers.skills}
-                            onChange={(event) => setAnswers({ ...answers, skills: event.target.value })}
-                        />
-                        <Textarea
-                            placeholder="Strengths (one per line: Strength Title - Supporting detail)"
-                            className="min-h-[90px]"
-                            value={answers.strengths}
-                            onChange={(event) => setAnswers({ ...answers, strengths: event.target.value })}
-                        />
-                        <Textarea
-                            placeholder="Languages (one per line: Language - Level, e.g., English - Native)"
-                            className="min-h-[90px]"
-                            value={answers.languages}
-                            onChange={(event) => setAnswers({ ...answers, languages: event.target.value })}
-                        />
-                        <Textarea
-                            placeholder="Projects (one per line: Name - Description - Tech)"
-                            className="min-h-[90px]"
-                            value={answers.projects}
-                            onChange={(event) => setAnswers({ ...answers, projects: event.target.value })}
-                        />
-                        <Textarea
-                            placeholder="Internship Experience (one per line: Role - Company - Dates - Highlights)"
-                            className="min-h-[110px]"
-                            value={answers.experience}
-                            onChange={(event) => setAnswers({ ...answers, experience: event.target.value })}
-                        />
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-foreground">Professional Summary <span className="font-normal text-muted-foreground">(2-3 lines)</span></label>
+                            <Textarea
+                                className="min-h-[90px]"
+                                value={answers.summary}
+                                onChange={(event) => setAnswers({ ...answers, summary: event.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-foreground">Education <span className="font-normal text-muted-foreground">(one per line: School - Degree - Year)</span></label>
+                            <Textarea
+                                className="min-h-[90px]"
+                                value={answers.education}
+                                onChange={(event) => setAnswers({ ...answers, education: event.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-foreground">Skills <span className="font-normal text-muted-foreground">(comma separated)</span></label>
+                            <Textarea
+                                className="min-h-[80px]"
+                                value={answers.skills}
+                                onChange={(event) => setAnswers({ ...answers, skills: event.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-foreground">Strengths <span className="font-normal text-muted-foreground">(one per line: Strength Title - Supporting detail)</span></label>
+                            <Textarea
+                                className="min-h-[90px]"
+                                value={answers.strengths}
+                                onChange={(event) => setAnswers({ ...answers, strengths: event.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-foreground">Languages</label>
+                            <div className="grid grid-cols-2 gap-2 p-3 rounded-md border border-input bg-background">
+                                {["English", "Hindi", "Gujarati", "Bengali", "Telugu", "Marathi", "Tamil", "Kannada", "Malayalam", "Punjabi"].map((lang) => {
+                                    const selected = answers.languages.split("\n").some((line) => line.trim().toLowerCase().startsWith(lang.toLowerCase()));
+                                    return (
+                                        <label key={lang} className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={selected}
+                                                onChange={(e) => {
+                                                    const lines = answers.languages.split("\n").filter((l) => l.trim());
+                                                    if (e.target.checked) {
+                                                        setAnswers({ ...answers, languages: [...lines, `${lang} - Native`].join("\n") });
+                                                    } else {
+                                                        setAnswers({ ...answers, languages: lines.filter((l) => !l.trim().toLowerCase().startsWith(lang.toLowerCase())).join("\n") });
+                                                    }
+                                                }}
+                                                className="h-4 w-4 rounded border-input accent-primary"
+                                            />
+                                            {lang}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-foreground">Projects <span className="font-normal text-muted-foreground">(one per line: Name - Description - Tech)</span></label>
+                            <Textarea
+                                className="min-h-[90px]"
+                                value={answers.projects}
+                                onChange={(event) => setAnswers({ ...answers, projects: event.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-foreground">Internship Experience <span className="font-normal text-muted-foreground">(one per line: Role - Company - Dates - Highlights)</span></label>
+                            <Textarea
+                                className="min-h-[110px]"
+                                value={answers.experience}
+                                onChange={(event) => setAnswers({ ...answers, experience: event.target.value })}
+                            />
+                        </div>
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                             <Button onClick={handleGenerate} disabled={isGenerating} className="gap-2">
                                 {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
