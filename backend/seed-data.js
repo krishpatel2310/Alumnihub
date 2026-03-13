@@ -15,7 +15,7 @@ import Comment from './src/models/comment.model.js';
 // Connect to MongoDB
 const connectDB = async () => {
   try {
-    await mongoose.connect(`${process.env.MONGODB_URI}/Alumni-Project`);
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('MongoDB connected successfully✅');
   } catch (error) {
     console.error('MongoDB connection failed❌:', error);
@@ -40,12 +40,12 @@ const randomDate = (start, end) => {
 // Generate alumni users
 const generateAlumni = async (count) => {
   const alumni = [];
-  
+
   for (let i = 0; i < count; i++) {
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
     const graduationYear = 2015 + Math.floor(Math.random() * 8); // 2015-2022
-    
+
     alumni.push({
       name: `${firstName} ${lastName}`,
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@alumni.com`,
@@ -66,18 +66,18 @@ const generateAlumni = async (count) => {
       banStatus: 'active'
     });
   }
-  
+
   return await User.insertMany(alumni);
 };
 
 // Generate students
 const generateStudents = async (count) => {
   const students = [];
-  
+
   for (let i = 0; i < count; i++) {
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-    
+
     students.push({
       name: `${firstName} ${lastName}`,
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@student.com`,
@@ -94,7 +94,7 @@ const generateStudents = async (count) => {
       banStatus: 'active'
     });
   }
-  
+
   return await User.insertMany(students);
 };
 
@@ -117,13 +117,13 @@ const generateEvents = async (alumni) => {
     'Research Symposium',
     'Entrepreneurship Summit'
   ];
-  
+
   const events = [];
-  
+
   for (let i = 0; i < 15; i++) {
     const eventDate = randomDate(new Date(), new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)); // Next 90 days
     const eventTime = `${9 + Math.floor(Math.random() * 9)}:00 ${Math.random() > 0.5 ? 'AM' : 'PM'}`;
-    
+
     events.push({
       title: eventTitles[i],
       description: `Join us for an exciting ${eventTitles[i]}! This event will provide valuable insights and networking opportunities for students and alumni alike.`,
@@ -134,7 +134,7 @@ const generateEvents = async (alumni) => {
       participants: []
     });
   }
-  
+
   return await Event.insertMany(events);
 };
 
@@ -143,14 +143,14 @@ const generateJobs = async (alumni) => {
   const jobTypes = ['Full-time', 'Part-time', 'Internship', 'Contract'];
   const jobLocations = ['Remote', 'Hybrid', ...cities];
   const categories = ['Software Development', 'Data Science', 'Product Management', 'DevOps', 'UI/UX Design', 'Quality Assurance'];
-  
+
   const jobs = [];
-  
+
   for (let i = 0; i < 20; i++) {
     const company = companies[Math.floor(Math.random() * companies.length)];
     const title = jobTitles[Math.floor(Math.random() * jobTitles.length)];
     const postedBy = alumni[Math.floor(Math.random() * alumni.length)];
-    
+
     jobs.push({
       title: title,
       company: company,
@@ -165,7 +165,7 @@ const generateJobs = async (alumni) => {
       applicants: []
     });
   }
-  
+
   return await Jobs.insertMany(jobs);
 };
 
@@ -183,13 +183,13 @@ const generateDonations = async () => {
     'Innovation Lab Setup',
     'Alumni Association Activities'
   ];
-  
+
   const donations = [];
-  
+
   for (let i = 0; i < 10; i++) {
     const goalAmount = (50000 + Math.floor(Math.random() * 450000));
     const raisedAmount = Math.floor(goalAmount * (Math.random() * 0.8)); // 0-80% raised
-    
+
     donations.push({
       name: donationNames[i],
       description: `Help us ${donationNames[i].toLowerCase()}. Your contribution will make a significant impact on student life and campus development.`,
@@ -200,7 +200,7 @@ const generateDonations = async () => {
       category: ['Education', 'Infrastructure', 'Research', 'Student Welfare'][Math.floor(Math.random() * 4)]
     });
   }
-  
+
   return await Donation.insertMany(donations);
 };
 
@@ -228,14 +228,14 @@ const generatePosts = async (users) => {
     'How to prepare for product-based companies like Google, Microsoft, Amazon?',
     'Remote work experiences and tips. How has your productivity been affected?'
   ];
-  
+
   const categories = ["Mentorship", "Events", "Research", "Jobs", "Alumni Stories", "General"];
-  
+
   const posts = [];
-  
+
   for (let i = 0; i < 20; i++) {
     const author = users[Math.floor(Math.random() * users.length)];
-    
+
     posts.push({
       author: author._id,
       content: postContents[i],
@@ -251,7 +251,7 @@ const generatePosts = async (users) => {
       createdAt: randomDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), new Date())
     });
   }
-  
+
   return await Post.insertMany(posts);
 };
 
@@ -269,15 +269,15 @@ const generateComments = async (posts, users) => {
     'I would love to connect and discuss this further.',
     'This helped me a lot. Thank you!'
   ];
-  
+
   const comments = [];
-  
+
   for (const post of posts) {
     const commentCount = Math.floor(Math.random() * 8) + 2; // 2-10 comments per post
-    
+
     for (let i = 0; i < commentCount; i++) {
       const author = users[Math.floor(Math.random() * users.length)];
-      
+
       comments.push({
         post: post._id,
         author: author._id,
@@ -290,11 +290,11 @@ const generateComments = async (posts, users) => {
         createdAt: randomDate(post.createdAt, new Date())
       });
     }
-    
+
     // Update post comment count
     await Post.findByIdAndUpdate(post._id, { commentsCount: commentCount });
   }
-  
+
   return await Comment.insertMany(comments);
 };
 
@@ -302,10 +302,10 @@ const generateComments = async (posts, users) => {
 const seedDatabase = async () => {
   try {
     console.log('🌱 Starting database seeding...\n');
-    
+
     // Connect to database
     await connectDB();
-    
+
     // Clear existing data (except admin and test users)
     console.log('🧹 Clearing existing dummy data...');
     await User.deleteMany({ email: { $regex: /@(alumni|student)\.com$/ } });
@@ -315,45 +315,45 @@ const seedDatabase = async () => {
     await Post.deleteMany({});
     await Comment.deleteMany({});
     console.log('✅ Existing dummy data cleared\n');
-    
+
     // Generate alumni (20)
     console.log('👨‍🎓 Generating 20 alumni users...');
     const alumni = await generateAlumni(20);
     console.log(`✅ Created ${alumni.length} alumni users\n`);
-    
+
     // Generate students (15)
     console.log('👩‍🎓 Generating 15 student users...');
     const students = await generateStudents(15);
     console.log(`✅ Created ${students.length} student users\n`);
-    
+
     // Combine all users
     const allUsers = [...alumni, ...students];
-    
+
     // Generate events (15)
     console.log('🎉 Generating 15 events...');
     const events = await generateEvents(alumni);
     console.log(`✅ Created ${events.length} events\n`);
-    
+
     // Generate jobs (20)
     console.log('💼 Generating 20 job postings...');
     const jobs = await generateJobs(alumni);
     console.log(`✅ Created ${jobs.length} job postings\n`);
-    
+
     // Generate donations (10)
     console.log('💰 Generating 10 donation campaigns...');
     const donations = await generateDonations();
     console.log(`✅ Created ${donations.length} donation campaigns\n`);
-    
+
     // Generate posts (20)
     console.log('💬 Generating 20 community posts...');
     const posts = await generatePosts(allUsers);
     console.log(`✅ Created ${posts.length} community posts\n`);
-    
+
     // Generate comments
     console.log('💭 Generating comments for posts...');
     const comments = await generateComments(posts, allUsers);
     console.log(`✅ Created ${comments.length} comments\n`);
-    
+
     console.log('🎉 Database seeding completed successfully!\n');
     console.log('📊 Summary:');
     console.log(`   👥 Users: ${allUsers.length} (${alumni.length} alumni + ${students.length} students)`);
@@ -364,7 +364,7 @@ const seedDatabase = async () => {
     console.log(`   💭 Comments: ${comments.length}`);
     console.log('\n✅ All dummy data has been seeded successfully!');
     console.log('\n📝 Note: All generated users have password: password123');
-    
+
     process.exit(0);
   } catch (error) {
     console.error('❌ Error seeding database:', error);

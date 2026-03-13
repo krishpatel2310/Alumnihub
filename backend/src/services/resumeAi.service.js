@@ -1,48 +1,85 @@
 import ApiError from "../utils/ApiError.js";
 import fetch from "node-fetch";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { VALID_TEMPLATES } from "../config/resume.config.js";
+
+/**
+ * Sanitizes user input to prevent prompt injection attacks
+ * Removes markdown, code blocks, and suspicious patterns
+ */
+const sanitizePromptInput = (input, maxLength = 500) => {
+    if (!input || typeof input !== 'string') return '';
+
+    // Trim and limit length
+    let sanitized = input.trim().slice(0, maxLength);
+
+    // Remove code blocks (```...```)
+    sanitized = sanitized.replace(/```[\s\S]*?```/g, '');
+
+    // Remove markdown syntax
+    sanitized = sanitized.replace(/[`*_~#\[\](){}|]/g, '');
+
+    // Remove multiple consecutive newlines (keep max 2)
+    sanitized = sanitized.replace(/\n{3,}/g, '\n\n');
+
+    // Remove leading/trailing whitespace again
+    sanitized = sanitized.trim();
+
+    return sanitized;
+};
 
 const buildPrompt = ({ templateId, answers }) => {
-    const {
-        fullName,
-        targetRole,
-        email,
-        phone,
-        location,
-        headline,
-        summary,
-        education,
-        skills,
-        projects,
-        experience,
-        linkedin,
-        github
-    } = answers;
+    // Validate template before using it
+    if (!VALID_TEMPLATES.includes(templateId)) {
+        throw new ApiError(400, `Invalid template: ${templateId}`);
+    }
 
-    return `You are an expert professional resume writer and career coach. Your goal is to create a high-impact, ATS-optimized resume.
+    // Sanitize all user inputs to prevent prompt injection
+    const safe = {
+        fullName: sanitizePromptInput(answers.fullName, 100),
+        targetRole: sanitizePromptInput(answers.targetRole, 100),
+        email: sanitizePromptInput(answers.email, 254),
+        phone: sanitizePromptInput(answers.phone, 20),
+        location: sanitizePromptInput(answers.location, 100),
+        headline: sanitizePromptInput(answers.headline, 150),
+        summary: sanitizePromptInput(answers.summary, 1000),
+        education: sanitizePromptInput(answers.education, 2000),
+        skills: sanitizePromptInput(answers.skills, 500),
+        strengths: sanitizePromptInput(answers.strengths, 1000),
+        languages: sanitizePromptInput(answers.languages, 500),
+        projects: sanitizePromptInput(answers.projects, 2000),
+        experience: sanitizePromptInput(answers.experience, 5000),
+        linkedin: sanitizePromptInput(answers.linkedin, 500),
+        github: sanitizePromptInput(answers.github, 500)
+    };
 
-Template Style: ${templateId}
+    return `You are an expert professional resume writer and career coach. Your goal is to create a high-impact, ATS-optimized resume that can score 80+ in standard ATS checks.
+
+Template Style: ${safe.templateId || templateId}
 
 Candidate Information:
-Full Name: ${fullName}
-Target Role: ${targetRole}
-Contact: ${email}, ${phone}, ${location}
-Headline/Title: ${headline}
-Summary/Objective: ${summary}
-Education: ${education}
-Skills: ${skills}
-Projects: ${projects}
-Experience: ${experience}
-LinkedIn: ${linkedin}
-GitHub: ${github}
+Full Name: ${safe.fullName}
+Target Role: ${safe.targetRole}
+Contact: ${safe.email}, ${safe.phone}, ${safe.location}
+Headline/Title: ${safe.headline}
+Summary/Objective: ${safe.summary}
+Education: ${safe.education}
+Skills: ${safe.skills}
+Strengths: ${safe.strengths}
+Languages: ${safe.languages}
+Projects: ${safe.projects}
+Experience: ${safe.experience}
+LinkedIn: ${safe.linkedin}
+GitHub: ${safe.github}
 
 INSTRUCTIONS:
-1. **Summary**: Rewrite the summary to be professional, concise, and tailored to the target role.
-2. **Experience**: Rewrite experience bullet points using strong **action verbs** (e.g., spearheaded, optimized, developed). Focus on **achievements and quantifiable results** (e.g., "Increased efficiency by 20%"). Remove passive language.
-3. **Projects**: Convert project descriptions into achievement-based bullet points, highlighting the tech stack used.
-4. **Skills**: Group and format skills logically (e.g., Languages, Frameworks, Tools).
-5. **Formatting**: Ensure the output is strictly structured for the selected template style.
-6. **No Fluff**: Keep content concise, professional, and free of buzzwords.
+1. **ATS Optimization**: Include target-role-relevant keywords naturally across headline, summary, experience, and skills.
+2. **Summary**: Keep summary to 2-4 lines, specific and role-focused. Avoid generic claims.
+3. **Experience**: For each role, provide 3-5 bullets using strong action verbs and measurable impact (numbers, %, time saved, revenue, scale, latency, users, etc.).
+4. **Projects**: Make each project outcome-focused with clear impact and technologies.
+5. **Skills**: Output clean, ATS-friendly skill keywords (no decorative symbols).
+6. **Formatting**: Keep plain text style and standard headings only (ATS parsers).
+7. **No Fluff**: Do not use first-person pronouns, emojis, tables, or excessive adjectives.
 
 Return ONLY valid JSON in the following format:
 {
@@ -57,12 +94,115 @@ Return ONLY valid JSON in the following format:
     "github": "string (optional)"
   },
   "skills": ["string array"],
-  "education": [{"degree": "string", "institution": "string", "year": "string"}],
-  "experience": [{"role": "string", "company": "string", "duration": "string", "bullets": ["string array"]}],
+    "strengths": [{"title": "string", "detail": "string"}],
+    "languages": [{"name": "string", "level": "string"}],
+  "education": [{"degree": "string", "school": "string", "year": "string"}],
+  "experience": [{"role": "string", "company": "string", "startDate": "string", "endDate": "string", "bullets": ["string array"]}],
   "projects": [{"name": "string", "description": "string", "tech": ["string array"]}]
 }
 
 IMPORTANT: Return ONLY the JSON object. Do not include markdown formatting (like \`\`\`json), explanations, or any other text.`;
+};
+
+const toString = (value) => (typeof value === "string" ? value.trim() : "");
+
+const toStringArray = (value) => {
+    if (Array.isArray(value)) return value.map((item) => toString(item)).filter(Boolean);
+    if (typeof value === "string") {
+        return value
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean);
+    }
+    return [];
+};
+
+const parseDuration = (duration) => {
+    const text = toString(duration);
+    if (!text) return { startDate: "", endDate: "" };
+    const parts = text.split(/-|–|to/i).map((p) => p.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+        return { startDate: parts[0], endDate: parts[1] };
+    }
+    return { startDate: text, endDate: "Present" };
+};
+
+const normalizeResumeContent = (rawContent, answers = {}) => {
+    const contact = rawContent?.contact || {};
+
+    const normalizedStrengths = Array.isArray(rawContent?.strengths)
+        ? rawContent.strengths.map((item) => {
+            if (typeof item === "string") {
+                const [title, ...rest] = item.split("-");
+                return { title: toString(title), detail: toString(rest.join("-")) };
+            }
+            return {
+                title: toString(item?.title),
+                detail: toString(item?.detail)
+            };
+        }).filter((item) => item.title || item.detail)
+        : [];
+
+    const normalizedLanguages = Array.isArray(rawContent?.languages)
+        ? rawContent.languages.map((item) => {
+            if (typeof item === "string") {
+                const [name, ...rest] = item.split("-");
+                return { name: toString(name), level: toString(rest.join("-")) };
+            }
+            return {
+                name: toString(item?.name),
+                level: toString(item?.level)
+            };
+        }).filter((item) => item.name || item.level)
+        : [];
+
+    const normalizedEducation = Array.isArray(rawContent?.education)
+        ? rawContent.education.map((item) => ({
+            school: toString(item?.school || item?.institution),
+            degree: toString(item?.degree),
+            year: toString(item?.year)
+        })).filter((item) => item.school || item.degree || item.year)
+        : [];
+
+    const normalizedExperience = Array.isArray(rawContent?.experience)
+        ? rawContent.experience.map((item) => {
+            const fallbackDates = parseDuration(item?.duration);
+            return {
+                role: toString(item?.role),
+                company: toString(item?.company),
+                startDate: toString(item?.startDate) || fallbackDates.startDate,
+                endDate: toString(item?.endDate) || fallbackDates.endDate,
+                bullets: toStringArray(item?.bullets)
+            };
+        }).filter((item) => item.role || item.company || item.bullets.length)
+        : [];
+
+    const normalizedProjects = Array.isArray(rawContent?.projects)
+        ? rawContent.projects.map((item) => ({
+            name: toString(item?.name),
+            description: toString(item?.description),
+            tech: toStringArray(item?.tech)
+        })).filter((item) => item.name || item.description || item.tech.length)
+        : [];
+
+    return {
+        name: toString(rawContent?.name) || toString(answers?.fullName),
+        headline: toString(rawContent?.headline) || toString(answers?.targetRole || answers?.headline),
+        summary: toString(rawContent?.summary) || toString(answers?.summary),
+        contact: {
+            email: toString(contact?.email) || toString(answers?.email),
+            phone: toString(contact?.phone) || toString(answers?.phone),
+            location: toString(contact?.location) || toString(answers?.location),
+            linkedin: toString(contact?.linkedin) || toString(answers?.linkedin),
+            github: toString(contact?.github) || toString(answers?.github)
+        },
+        skills: toStringArray(rawContent?.skills?.length ? rawContent.skills : answers?.skills),
+        strengths: normalizedStrengths,
+        languages: normalizedLanguages,
+        education: normalizedEducation,
+        experience: normalizedExperience,
+        projects: normalizedProjects
+    };
 };
 
 const cleanResponse = (content) => {
@@ -152,9 +292,16 @@ export const generateResumeContent = async ({ templateId, answers }) => {
     const provider = process.env.AI_PROVIDER?.toLowerCase() || "groq"; // Default to Groq if not specified
     const model = process.env.AI_MODEL;
 
-    console.log(`Generating resume using provider: ${provider}`);
+    // Log generation with provider info (server-side only)
+    console.log(`[RESUME] Generation started - Provider: ${provider}, Template: ${templateId}`);
 
     try {
+        // Validate provider has required API key
+        const apiKeyVar = `${provider.toUpperCase()}_API_KEY`;
+        if (!process.env[apiKeyVar]) {
+            throw new ApiError(500, `Missing configuration: ${apiKeyVar} not set`);
+        }
+
         let content;
         switch (provider) {
             case "openai":
@@ -171,16 +318,40 @@ export const generateResumeContent = async ({ templateId, answers }) => {
         }
 
         try {
-            return JSON.parse(content);
+            const parsed = JSON.parse(content);
+            return normalizeResumeContent(parsed, answers);
         } catch (parseError) {
+            // Log full error server-side for debugging
+            console.error(`[RESUME ERROR] JSON Parse failed for provider: ${provider}`, {
+                errorMessage: parseError.message,
+                responseLength: content?.length || 0,
+                templateId,
+                timestamp: new Date().toISOString()
+            });
+
+            // Return generic error to client (don't expose response content)
             throw new ApiError(
                 500,
-                `Failed to parse AI response as JSON (${provider}): ${parseError.message}. Response: ${content?.substring(0, 300)}`
+                `Resume generation failed: Unable to process AI response. Please try again.`
             );
         }
 
     } catch (error) {
-        const errorMessage = error.message || String(error);
-        throw new ApiError(502, `AI Generation error (provider: ${provider}): ${errorMessage}`);
+        // Log detailed error server-side
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        console.error(`[RESUME ERROR] Generation failed for provider: ${provider}`, {
+            errorMessage: error.message,
+            templateId,
+            timestamp: new Date().toISOString()
+        });
+
+        // Return generic error to client
+        throw new ApiError(
+            502,
+            `Resume generation service temporarily unavailable. Please try again later.`
+        );
     }
 };
