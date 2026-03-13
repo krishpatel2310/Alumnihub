@@ -3,6 +3,7 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import Resume from "../models/resume.model.js";
 import { generateResumeContent } from "../services/resumeAi.service.js";
+import { validateGenerateResumeRequest } from "../utils/resumeValidators.js";
 
 const ensureStudent = (req) => {
     if (!req.user || req.user.role !== "student") {
@@ -43,15 +44,10 @@ const saveResumeDraft = asyncHandler(async (req, res) => {
 const generateResume = asyncHandler(async (req, res) => {
     ensureStudent(req);
 
+    // Validate request body with comprehensive validation
+    validateGenerateResumeRequest(req);
+
     const { templateId, answers } = req.body;
-
-    if (!templateId) {
-        throw new ApiError(400, "templateId is required");
-    }
-
-    if (!answers || !answers.fullName || !answers.targetRole) {
-        throw new ApiError(400, "fullName and targetRole are required");
-    }
 
     const content = await generateResumeContent({ templateId, answers });
 
