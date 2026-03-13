@@ -26,6 +26,23 @@ export default function Settings() {
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
+  const [interests, setInterests] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState("");
+  const [newInterest, setNewInterest] = useState("");
+
+  const predefinedSkills = [
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "Node.js",
+    "MongoDB",
+    "SQL",
+    "Python",
+    "Docker",
+    "Kubernetes",
+    "AWS",
+  ];
   
   // Password change states
   const [currentPassword, setCurrentPassword] = useState("");
@@ -100,7 +117,13 @@ export default function Settings() {
         profileData.bio = bio.trim();
       }
       if (linkedinUrl && typeof linkedinUrl === 'string' && linkedinUrl.trim()) {
-        profileData.linkedinUrl = linkedinUrl.trim();
+        profileData.linkedin = linkedinUrl.trim();
+      }
+      if (skills && Array.isArray(skills) && skills.length > 0) {
+        profileData.skills = skills;
+      }
+      if (interests && Array.isArray(interests) && interests.length > 0) {
+        profileData.interests = interests;
       }
 
       const response = await userService.updateProfile(profileData);
@@ -251,7 +274,13 @@ export default function Settings() {
       setLocation(user.location || "");
       setPhone(user.phone || "");
       setBio(user.bio || "");
-      setLinkedinUrl(user.linkedinUrl || "");
+      setLinkedinUrl(user.linkedin || "");
+      if (Array.isArray(user.skills)) {
+        setSkills(user.skills);
+      }
+      if (Array.isArray(user.interests)) {
+        setInterests(user.interests);
+      }
     }
   }, [user]);
 
@@ -454,6 +483,112 @@ export default function Settings() {
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="Tell us about yourself..."
                     className="min-h-[100px]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="skills">Skills</Label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs flex items-center gap-2"
+                      >
+                        {skill}
+                        <button
+                          type="button"
+                          className="text-xs hover:text-destructive"
+                          onClick={() =>
+                            setSkills((prev) => prev.filter((s) => s !== skill))
+                          }
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    {skills.length === 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        No skills added yet.
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {predefinedSkills.map((skill) => (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => {
+                          if (!skills.includes(skill)) {
+                            setSkills((prev) => [...prev, skill]);
+                          }
+                        }}
+                        className="px-3 py-1 rounded-full border border-border/60 text-xs text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                      >
+                        {skill}
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    id="skills"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const value = newSkill.trim();
+                        if (value && !skills.includes(value)) {
+                          setSkills((prev) => [...prev, value]);
+                        }
+                        setNewSkill("");
+                      }
+                    }}
+                    placeholder="Type a skill and press Enter (e.g., JavaScript)"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="interests">Interests</Label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {interests.map((interest) => (
+                      <span
+                        key={interest}
+                        className="px-3 py-1 rounded-full bg-secondary/10 text-secondary-foreground text-xs flex items-center gap-2"
+                      >
+                        {interest}
+                        <button
+                          type="button"
+                          className="text-xs hover:text-destructive"
+                          onClick={() =>
+                            setInterests((prev) =>
+                              prev.filter((s) => s !== interest)
+                            )
+                          }
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    {interests.length === 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        No interests added yet.
+                      </span>
+                    )}
+                  </div>
+                  <Input
+                    id="interests"
+                    value={newInterest}
+                    onChange={(e) => setNewInterest(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const value = newInterest.trim();
+                        if (value && !interests.includes(value)) {
+                          setInterests((prev) => [...prev, value]);
+                        }
+                        setNewInterest("");
+                      }
+                    }}
+                    placeholder="Type an interest and press Enter (e.g., Backend)"
                   />
                 </div>
 

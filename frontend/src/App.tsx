@@ -9,6 +9,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 // User pages
 import Dashboard from "./pages/Dashboard";
 import Alumni from "./pages/Alumni";
+import AlumniNetwork from "./pages/AlumniNetwork";
 import Events from "./pages/Events";
 import Jobs from "./pages/Jobs";
 import PostJob from "./pages/PostJob";
@@ -17,6 +18,7 @@ import Communications from "./pages/Communications";
 import PostDetail from "./pages/PostDetail";
 import Connections from "./pages/Connections";
 import Settings from "./pages/Settings";
+import Recommendations from "./pages/Recommendations";
 import Resume from "./pages/Resume";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +28,8 @@ import { Register } from "./pages/auth/Register";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { OTPVerification } from "./pages/auth/OTPVerification";
 import { ResetPassword } from "./pages/auth/ResetPassword";
+import { GoogleAuthSuccess } from "./pages/auth/GoogleAuthSuccess";
+import { RoleSelection } from "./pages/auth/RoleSelection";
 
 // Admin pages
 import { Dashboard as AdminDashboard } from "./pages/admin/Dashboard";
@@ -57,6 +61,8 @@ const App = () => (
               <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="otp-verification" element={<OTPVerification />} />
               <Route path="reset-password" element={<ResetPassword />} />
+              <Route path="google/success" element={<GoogleAuthSuccess />} />
+              <Route path="role-selection" element={<RoleSelection />} />
             </Route>
 
             {/* Protected User Routes - With Sidebar */}
@@ -67,6 +73,7 @@ const App = () => (
             }>
               <Route index element={<Dashboard />} />
               <Route path="alumni" element={<Alumni />} />
+              <Route path="alumni-network" element={<AlumniNetwork />} />
               <Route path="events" element={<Events />} />
               <Route path="jobs" element={<Jobs />} />
               <Route path="jobs/post" element={<PostJob />} />
@@ -75,6 +82,7 @@ const App = () => (
               <Route path="communications/post/:postId" element={<PostDetail />} />
               <Route path="connections" element={<Connections />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="recommendations" element={<Recommendations />} />
               <Route path="resume" element={<Resume />} />
             </Route>
 

@@ -10,6 +10,10 @@ import { adminService, eventService, userService, jobService, donationService, c
 import { useToast } from "@/hooks/use-toast";
 import { cache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
+// Temporarily disabled to debug
+// const AlumniWorldMap = lazy(() => import("@/components/AlumniWorldMap"));
+// const AlumniSpotlight = lazy(() => import("@/components/AlumniSpotlight"));
+
 interface DashboardStats {
   totalAlumni: number;
   totalEvents: number;
@@ -427,6 +431,24 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Alumni Spotlight Section - Temporarily Disabled */}
+      {/* {!loading && (
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '100ms' }}>
+          <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+            <AlumniSpotlight />
+          </Suspense>
+        </div>
+      )} */}
+
+      {/* Alumni World Map Section - Temporarily Disabled */}
+      {/* {!loading && (
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '150ms' }}>
+          <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
+            <AlumniWorldMap />
+          </Suspense>
+        </div>
+      )} */}
 
       {/* Content - Show skeleton or data */}
       {loading ? (

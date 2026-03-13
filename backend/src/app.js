@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import passport from './config/passport.js';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use(express.json({ limit: "50mb" }));  //limit incoming data
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));  // used for parsing incoming form data 
 app.use(express.static('public'))  //sets files in public as static
 app.use(cookieParser()) //used for cookie reading
+app.use(passport.initialize()); //initialize passport for Google OAuth
 
 
 //Routes
@@ -48,9 +50,11 @@ import postRouter from './routes/post.routes.js';
 import notificationRouter from './routes/notification.routes.js';
 import connectionRouter from './routes/connection.routes.js';
 import messageRouter from './routes/message.routes.js';
+import googleAuthRouter from './routes/googleAuth.routes.js';
 import resumeRouter from './routes/resume.routes.js';
 
 app.use('/api/', loginRouter)
+app.use('/api/auth', googleAuthRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/users', userRouter)
 app.use('/api/events', eventRouter)

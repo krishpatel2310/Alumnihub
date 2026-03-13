@@ -104,7 +104,27 @@ export const userService = {
     newPassword: string;
   }): Promise<ApiResponse> => {
     return await api.post('/users/change-password', data);
-  }
+  },
+
+  getMentorRecommendations: async (): Promise<ApiResponse> => {
+    return await api.get('/users/recommendations/mentors');
+  },
+
+  getCareerRecommendations: async (): Promise<ApiResponse> => {
+    return await api.get('/users/recommendations/careers');
+  },
+
+  getAlumniLocations: async (): Promise<ApiResponse> => {
+    return await api.get('/users/alumni/locations');
+  },
+
+  getFeaturedAlumni: async (): Promise<ApiResponse> => {
+    return await api.get('/users/alumni/featured');
+  },
+
+  setFeaturedAlumni: async (userId: string, data: { isFeatured: boolean; duration?: number }): Promise<ApiResponse> => {
+    return await api.patch(`/users/alumni/featured/${userId}`, data);
+  },
 };
 
 // Resume Services
