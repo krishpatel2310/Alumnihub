@@ -11,9 +11,9 @@ app.use(cors({
     if (!origin) return callback(null, true);
 
     const allowedOrigins = [
-      'https://allynet-app.vercel.app',
+      'https://alumnihub-app.vercel.app',
       'http://localhost:5173',
-      'https://allynet.lovable.app'
+      'https://alumnihub.lovable.app'
     ];
 
     if (allowedOrigins.indexOf(origin) !== -1) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'allynet-v3';
+const CACHE_NAME = 'alumnihub-v3';
 const urlsToCache = [
   '/ANlogo.png',
   '/favicon.ico',

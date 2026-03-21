@@ -32,10 +32,10 @@ const createEmailTemplate = (subject, body) => {
                             <tr>
                                 <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
                                     <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 2px;">
-                                        AllyNet - VGEC
+                                        Alumnihub - DDIT
                                     </h1>
                                     <p style="color: #f0f0f0; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 1px;">
-                                        Vishwakarma Government Engineering College
+                                        DDIT
                                     </p>
                                 </td>
                             </tr>
@@ -69,17 +69,17 @@ const createEmailTemplate = (subject, body) => {
                                         <tr>
                                             <td style="padding-bottom: 15px;">
                                                 <p style="margin: 0; color: #333333; font-size: 14px; font-weight: 600;">
-                                                    AllyNet - Alumni Network Platform
+                                                    Alumnihub - Alumni Network Platform
                                                 </p>
                                                 <p style="margin: 5px 0 0 0; color: #666666; font-size: 13px;">
-                                                    Vishwakarma Government Engineering College, Ahmedabad
+                                                    DDIT
                                                 </p>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td style="padding-top: 15px; border-top: 1px solid #e0e0e0;">
                                                 <p style="margin: 0; color: #999999; font-size: 12px; line-height: 1.6;">
-                                                    This is an automated email from AllyNet. Please do not reply to this email.<br>
+                                                    This is an automated email from Alumnihub. Please do not reply to this email.<br>
                                                     For any queries, contact us at <a href="mailto:${process.env.EMAIL_USER}" style="color: #667eea; text-decoration: none;">${process.env.EMAIL_USER}</a>
                                                 </p>
                                             </td>
@@ -87,7 +87,7 @@ const createEmailTemplate = (subject, body) => {
                                         <tr>
                                             <td style="padding-top: 15px;">
                                                 <p style="margin: 0; color: #cccccc; font-size: 11px;">
-                                                    © ${new Date().getFullYear()} AllyNet - VGEC. All rights reserved.
+                                                    © ${new Date().getFullYear()} Alumnihub - DDIT. All rights reserved.
                                                 </p>
                                             </td>
                                         </tr>
@@ -111,7 +111,7 @@ export const sendEmail = async (to, subject, body) => {
         
         const mailOptions = {
             from: {
-                name: 'AllyNet - VGEC',
+                name: 'Alumnihub - DDIT',
                 address: process.env.EMAIL_USER
             },
             to: to,
@@ -153,7 +153,7 @@ export const sendBulkEmail = async (subject, body, filter, type = 'quick_message
             try {
                 const mailOptions = {
                     from: {
-                        name: 'AllyNet - VGEC',
+                        name: 'Alumnihub - DDIT',
                         address: process.env.EMAIL_USER
                     },
                     to: user.email,
