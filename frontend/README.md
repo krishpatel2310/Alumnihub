@@ -1,4 +1,4 @@
-# AllyNet - Alumni Network Management Platform
+# Alumnihub - Alumni Network Management Platform
 
 A comprehensive full-stack web application designed to connect alumni, students, and administrators through an interactive platform for events, job postings, donations, and communications.
 
@@ -51,7 +51,7 @@ AlumniHub is a modern alumni engagement platform that facilitates networking bet
 
 ## 🛠 Tech Stack
 
-### Frontend (AllyNet-Frontend)
+### Frontend (Alumnihub-Frontend)
 
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite
@@ -65,7 +65,7 @@ AlumniHub is a modern alumni engagement platform that facilitates networking bet
 - **Charts**: Recharts
 - **Deployment**: Vercel
 
-### Backend (AllyNet-Backend)
+### Backend (Alumnihub-Backend)
 
 - **Runtime**: Node.js with ES Modules
 - **Framework**: Express.js
@@ -82,7 +82,7 @@ AlumniHub is a modern alumni engagement platform that facilitates networking bet
 ## 📁 Project Structure
 
 ```
-AllyNet Original/
+Alumnihub Original/
 │
 ├── Alumnihub-Frontend/          # React TypeScript Frontend
 │   ├── src/
@@ -102,7 +102,7 @@ AllyNet Original/
 │   ├── public/                  # Static assets
 │   └── package.json
 │
-└── AllyNet-Backend/                 # Node.js Express Backend
+└── Alumnihub-Backend/                 # Node.js Express Backend
     ├── src/
     │   ├── controllers/         # Request handlers
     │   ├── models/              # Mongoose schemas
@@ -130,7 +130,7 @@ AllyNet Original/
 
 1. Navigate to the backend directory:
 ```bash
-cd "AllyNet-Backend"
+cd "Alumnihub-Backend"
 ```
 
 2. Install dependencies:
@@ -138,7 +138,7 @@ cd "AllyNet-Backend"
 npm install
 ```
 
-3. Create a `.env` file in the root of `AllyNet-Backend`:
+3. Create a `.env` file in the root of `Alumnihub-Backend`:
 ```env
 PORT=5000
 MONGODB_URI=your_mongodb_connection_string
@@ -164,7 +164,7 @@ The backend will run on `http://localhost:5000`
 
 1. Navigate to the frontend directory:
 ```bash
-cd "AllyNet-Frontend"
+cd "Alumnihub-Frontend"
 ```
 
 2. Install dependencies:
@@ -174,7 +174,7 @@ npm install
 bun install
 ```
 
-3. Create a `.env` file in the root of `AllyNet-Frontend`:
+3. Create a `.env` file in the root of `Alumnihub-Frontend`:
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
