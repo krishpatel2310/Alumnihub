@@ -220,7 +220,10 @@ const TemplateThumbnail = ({ template, selected, onClick }: { template: any, sel
             className={`cursor-pointer transition-all duration-300 transform hover:scale-[1.02]`}
             onClick={onClick}
         >
-            <div className={`w-full aspect-[210/297] bg-white rounded-xl overflow-hidden relative border ${selected ? 'border-primary/70 ring-1 ring-primary/40' : 'border-border/70'}`}>
+            <div 
+                className={`w-full bg-white rounded-xl overflow-hidden relative border ${selected ? 'border-primary/70 ring-1 ring-primary/40' : 'border-border/70'}`}
+                style={{ aspectRatio: "210/297" }}
+            >
                 <div className="absolute inset-0 flex items-start justify-center pointer-events-none">
                     <div className="origin-top scale-[0.28] sm:scale-[0.31] lg:scale-[0.30] xl:scale-[0.31] will-change-transform">
                         <div className="w-[794px] h-[1123px] bg-white text-black shadow-none">
