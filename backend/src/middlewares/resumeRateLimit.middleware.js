@@ -20,7 +20,7 @@ export const resumeGenerationRateLimit = (req, res, next) => {
     const key = `resume_generate:${userId}`;
     const now = Date.now();
     const WINDOW = 60 * 60 * 1000; // 1 hour
-    const MAX_REQUESTS = 10;
+    const MAX_REQUESTS = 50;
 
     // Get or create rate limit entry
     let entry = rateLimitStore.get(key);
