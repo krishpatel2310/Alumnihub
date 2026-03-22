@@ -4,7 +4,7 @@ import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
 import { deleteUser, getAllUser } from '../controllers/user.controller.js';
 import { getReports, getReportedUsers, banUser, unbanUser, dismissReport } from '../controllers/report.controller.js';
 
-import { addStudentCsv, changeAdminPassword, editUserDetails, getCurrentAdmin, updateAdminAvatar, updateAdminProfile, } from '../controllers/admin.controller.js';
+import { addStudentCsv, changeAdminPassword, editUserDetails, getCurrentAdmin, updateAdminAvatar, updateAdminProfile, updateUserVerificationStatus } from '../controllers/admin.controller.js';
 
 const router = express.Router();
 
@@ -19,6 +19,8 @@ router.route("/editdetails/:_id").patch(verifyAdminJWT, editUserDetails)
 router.route("/alluser").get(verifyAdminJWT, getAllUser)
 
 router.route("/deleteuser/:userId").delete(verifyAdminJWT, deleteUser)
+
+router.route("/users/:userId/verification").patch(verifyAdminJWT, updateUserVerificationStatus)
 
 router.route("/change-password").post(verifyAdminJWT, changeAdminPassword)
 

@@ -115,6 +115,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  degreeCertificateUrl: {
+    type: String,
+    default: null
+  },
+  degreeCertificatePublicId: {
+    type: String,
+    default: null
+  },
+  degreeUploadedAt: {
+    type: Date,
+    default: null
+  },
   isVerified: {
     type: Boolean,
     default: false,

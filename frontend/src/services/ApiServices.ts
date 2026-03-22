@@ -182,6 +182,10 @@ export const adminService = {
     return await api.delete(`/admin/deleteuser/${userId}`);
   },
 
+  updateUserVerificationStatus: async (userId: string, isVerified: boolean): Promise<ApiResponse> => {
+    return await api.patch(`/admin/users/${userId}/verification`, { isVerified });
+  },
+
   changeAdminPassword: async (data: {
     oldPassword: string;
     newPassword: string;

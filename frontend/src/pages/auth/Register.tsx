@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GraduationCap, Users, Briefcase, Calendar } from 'lucide-react';
+import { authService } from '@/services/ApiServices';
 import '../../styles/register.css';
 
 const JOB_TITLES = [
@@ -80,6 +81,7 @@ export const Register = () => {
 
     if (role === 'alumni') {
       if (!graduationYear) e.graduationYear = 'Graduation year required';
+      if (!degreeFile) e.degreeFile = 'Degree certificate PDF is required';
       if (!jobTitle) e.jobTitle = 'Select a job title';
       if (!experienceYears) e.experienceYears = 'Years of experience required';
       if (!linkedin.trim()) e.linkedin = 'LinkedIn profile is required';
@@ -138,14 +140,7 @@ export const Register = () => {
     }
 
     try {
-      // TODO: Replace with actual API endpoint
-      console.log('Register payload:', {
-        role, fullName, email, displayName, graduationYear, degreeFileName: degreeFile?.name,
-        jobTitle, experienceYears, linkedin, github, expectedGradYear, cpi
-      });
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await authService.register(payload);
       
       setSuccess('Registration submitted successfully! Your account will be activated after verification.');
       
@@ -153,8 +148,12 @@ export const Register = () => {
       setTimeout(() => {
         navigate('/auth/login');
       }, 2000);
-    } catch (error) {
-      setErrors({ submit: 'Registration failed. Please try again.' });
+    } catch (error: any) {
+      const apiMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Registration failed. Please try again.';
+      setErrors({ submit: apiMessage });
     } finally {
       setIsSubmitting(false);
     }
@@ -197,6 +196,11 @@ export const Register = () => {
           {success && (
             <Alert className="mb-4 bg-green-50 border-green-200">
               <AlertDescription className="text-green-800">{success}</AlertDescription>
+            </Alert>
+          )}
+          {errors.submit && (
+            <Alert className="mb-4 bg-red-50 border-red-200">
+              <AlertDescription className="text-red-700">{errors.submit}</AlertDescription>
             </Alert>
           )}
           

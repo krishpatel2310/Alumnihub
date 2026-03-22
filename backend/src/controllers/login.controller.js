@@ -6,6 +6,8 @@ import Admin from "../models/admin.model.js";
 import otpGenerator from 'otp-generator';
 import { sendOTPEmail } from '../services/OTPGenerate.js';
 import jwt from "jsonwebtoken";
+import fs from "fs";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const generateUserAccessAndRefreshToken = async (userId) => {
     try {
@@ -112,6 +114,7 @@ const registerUser = asyncHandler(async (req, res) => {
         linkedin,
         github
     } = req.body;
+    const degreeFile = req.file;
 
     if (!fullName || !email || !password) {
         throw new ApiError(400, "Full name, email, and password are required");
@@ -126,6 +129,40 @@ const registerUser = asyncHandler(async (req, res) => {
     const allowedRoles = ["alumni", "student"];
     const safeRole = allowedRoles.includes(role) ? role : "student";
 
+    if (safeRole === "alumni") {
+        if (!degreeFile) {
+            throw new ApiError(400, "Degree certificate PDF is required for alumni registration");
+        }
+
+        if (degreeFile.mimetype !== "application/pdf") {
+            if (degreeFile.path && fs.existsSync(degreeFile.path)) {
+                fs.unlinkSync(degreeFile.path);
+            }
+            throw new ApiError(400, "Only PDF degree certificate is allowed");
+        }
+
+        const maxFileSize = 5 * 1024 * 1024;
+        if (degreeFile.size > maxFileSize) {
+            if (degreeFile.path && fs.existsSync(degreeFile.path)) {
+                fs.unlinkSync(degreeFile.path);
+            }
+            throw new ApiError(400, "Degree certificate size must be 5MB or less");
+        }
+    }
+
+    let degreeCertificateUrl;
+    let degreeCertificatePublicId;
+
+    if (safeRole === "alumni" && degreeFile?.path) {
+        const uploadResult = await uploadOnCloudinary(degreeFile.path);
+        degreeCertificateUrl = uploadResult?.secure_url || uploadResult?.url;
+        degreeCertificatePublicId = uploadResult?.public_id;
+
+        if (!degreeCertificateUrl) {
+            throw new ApiError(500, "Failed to upload degree certificate");
+        }
+    }
+
     const parsedGradYear = graduationYear || expectedGradYear ? Number(graduationYear || expectedGradYear) : undefined;
 
     const user = await User.create({
@@ -136,7 +173,10 @@ const registerUser = asyncHandler(async (req, res) => {
         graduationYear: Number.isNaN(parsedGradYear) ? undefined : parsedGradYear,
         currentPosition: jobTitle || undefined,
         linkedin: linkedin || undefined,
-        github: github || undefined
+        github: github || undefined,
+        degreeCertificateUrl,
+        degreeCertificatePublicId,
+        degreeUploadedAt: degreeCertificateUrl ? new Date() : undefined
     });
 
     const createdUser = await User.findById(user._id).select('-password -refreshToken');

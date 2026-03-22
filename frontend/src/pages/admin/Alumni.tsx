@@ -92,6 +92,8 @@ interface User {
   role?: string;
   avatar?: string;
   isVerified?: boolean;
+  degreeCertificateUrl?: string;
+  degreeUploadedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -202,6 +204,27 @@ export function Alumni() {
     },
   });
 
+  // Verification Status Mutation
+  const verificationMutation = useMutation({
+    mutationFn: async (data: { userId: string; isVerified: boolean }) => {
+      return await adminService.updateUserVerificationStatus(data.userId, data.isVerified);
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: "Success",
+        description: `User marked as ${variables.isVerified ? "verified" : "pending"}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["alumni"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update verification status",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Fetch alumni data using React Query
   const {
     data: alumniResponse,
@@ -300,6 +323,26 @@ export function Alumni() {
   const handleDeleteConfirm = () => {
     if (!userToDelete) return;
     deleteUserMutation.mutate(userToDelete._id);
+  };
+
+  const handleVerificationToggle = (user: User) => {
+    verificationMutation.mutate({
+      userId: user._id,
+      isVerified: !Boolean(user.isVerified),
+    });
+  };
+
+  const handleViewDegree = (user: User) => {
+    if (!user.degreeCertificateUrl) {
+      toast({
+        title: "No degree document",
+        description: "This user has not uploaded a degree certificate yet.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    window.open(user.degreeCertificateUrl, "_blank", "noopener,noreferrer");
   };
 
   const getStatusBadge = (isVerified: boolean) => {
@@ -912,6 +955,31 @@ export function Alumni() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-popover">
                             <DropdownMenuLabel className="text-xs sm:text-sm">Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() => handleVerificationToggle(alumni)}
+                              className="text-xs sm:text-sm"
+                              disabled={verificationMutation.isPending}
+                            >
+                              {alumni.isVerified ? (
+                                <>
+                                  <UserX className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-warning" />
+                                  Mark as Pending
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-success" />
+                                  Verify Alumni
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleViewDegree(alumni)}
+                              className="text-xs sm:text-sm"
+                            >
+                              <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-blue-600" />
+                              {alumni.degreeCertificateUrl ? "View Degree" : "Degree Not Uploaded"}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleEditUser(alumni)} className="text-xs sm:text-sm text-blue-600 focus:text-blue-600">
                               <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                               Edit
@@ -986,6 +1054,37 @@ export function Alumni() {
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewDegree(alumni)}
+                      className="h-8 text-xs"
+                    >
+                      <FileText className="h-3 w-3 mr-1.5" />
+                      Degree
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleVerificationToggle(alumni)}
+                      disabled={verificationMutation.isPending}
+                      className={`h-8 text-xs border ${alumni.isVerified
+                        ? 'bg-warning/10 text-warning border-warning/30 hover:bg-warning/20'
+                        : 'bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20'
+                        }`}
+                    >
+                      {alumni.isVerified ? (
+                        <>
+                          <UserX className="h-3 w-3 mr-1.5" />
+                          Pending
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="h-3 w-3 mr-1.5" />
+                          Verify
+                        </>
+                      )}
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

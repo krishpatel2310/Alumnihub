@@ -187,11 +187,43 @@ const editUserDetails = asyncHandler(async (req, res) => {
     }
 })
 
+const updateUserVerificationStatus = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const { isVerified } = req.body;
+
+    if (!userId) {
+        throw new ApiError(400, "User ID is required");
+    }
+
+    if (typeof isVerified !== 'boolean') {
+        throw new ApiError(400, "isVerified must be a boolean");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        userId,
+        { $set: { isVerified } },
+        { new: true }
+    ).select('-password -refreshToken');
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            200,
+            user,
+            `User marked as ${isVerified ? 'verified' : 'pending'}`
+        ));
+});
+
 export {
     changeAdminPassword,
     updateAdminAvatar,
     addStudentCsv,
     editUserDetails,
+    updateUserVerificationStatus,
     getCurrentAdmin,
     updateAdminProfile,
 }

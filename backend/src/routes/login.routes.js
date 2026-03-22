@@ -1,9 +1,12 @@
 import express from 'express';
-import { forgotPassword, login, logout, refreshAccessToken, resetPassword, verifyOTP } from "../controllers/login.controller.js";
+import { forgotPassword, login, logout, refreshAccessToken, registerUser, resetPassword, verifyOTP } from "../controllers/login.controller.js";
 import { verifyUserOrAdmin } from "../middlewares/auth.middleware.js"
 import { changeAdminPassword } from '../controllers/admin.controller.js';
+import { upload } from '../middlewares/multer.middleware.js';
 
 const router = express.Router();
+
+router.route("/register").post(upload.single("degreeFile"), registerUser)
 
 router.route("/login").post(login)
 
