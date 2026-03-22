@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +62,7 @@ interface Job {
 
 export default function Jobs() {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [postDialogOpen, setPostDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -110,6 +112,17 @@ export default function Jobs() {
   });
 
   const loading = loadingJobs || loadingPosted;
+
+  useEffect(() => {
+    const jobId = searchParams.get("jobId");
+    if (!jobId || loadingJobs) return;
+
+    const targetJob = allJobs.find((job) => job._id === jobId);
+    if (targetJob) {
+      setJobDetailsData(targetJob);
+      setJobDetailsOpen(true);
+    }
+  }, [searchParams, allJobs, loadingJobs]);
 
   // Optimistic Apply Mutation
   const applyMutation = useMutation({
@@ -727,7 +740,17 @@ export default function Jobs() {
       </Dialog>
 
       {/* Job Details Dialog */}
-      <Dialog open={jobDetailsOpen} onOpenChange={setJobDetailsOpen}>
+      <Dialog
+        open={jobDetailsOpen}
+        onOpenChange={(open) => {
+          setJobDetailsOpen(open);
+          if (!open && searchParams.get("jobId")) {
+            const nextParams = new URLSearchParams(searchParams);
+            nextParams.delete("jobId");
+            setSearchParams(nextParams);
+          }
+        }}
+      >
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">{jobDetailsData?.title}</DialogTitle>

@@ -18,7 +18,7 @@ import {
 import { adminService, userService, connectionService, handleApiError } from "@/services/ApiServices";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChatDialog } from "@/components/chat/ChatDialog";
 import { UserProfileDialog } from "@/components/profile/UserProfileDialog";
 
@@ -41,6 +41,7 @@ interface User {
 }
 
 export default function Alumni() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedIndustry, setSelectedIndustry] = useState("all");
@@ -169,6 +170,17 @@ export default function Alumni() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const targetUserId = searchParams.get('userId');
+    if (!targetUserId || isLoading) return;
+
+    const exists = alumniData.some((person) => person._id === targetUserId);
+    if (exists) {
+      setSelectedProfileId(targetUserId);
+      setProfileDialogOpen(true);
+    }
+  }, [searchParams, alumniData, isLoading]);
 
   const handleMessage = (userId: string) => {
     setSelectedUserId(userId);
@@ -347,7 +359,14 @@ export default function Alumni() {
       {/* User Profile Dialog */}
       <UserProfileDialog
         open={profileDialogOpen}
-        onOpenChange={setProfileDialogOpen}
+        onOpenChange={(open) => {
+          setProfileDialogOpen(open);
+          if (!open && searchParams.get('userId')) {
+            const nextParams = new URLSearchParams(searchParams);
+            nextParams.delete('userId');
+            setSearchParams(nextParams);
+          }
+        }}
         userId={selectedProfileId}
         onMessageClick={(userId) => {
           setSelectedUserId(userId);

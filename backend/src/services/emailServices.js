@@ -4,11 +4,34 @@ import Email from '../models/email.model.js';
 
 // Create transporter
 const createTransporter = () => {
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+
+    if (!emailUser || !emailPass) {
+        throw new Error('Email credentials are not configured. Set EMAIL_USER and EMAIL_PASS in backend/.env');
+    }
+
+    // Support both generic SMTP config and Gmail service mode.
+    if (process.env.EMAIL_HOST) {
+        const port = Number(process.env.EMAIL_PORT || 587);
+        const secure = process.env.EMAIL_SECURE === 'true' || port === 465;
+
+        return nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port,
+            secure,
+            auth: {
+                user: emailUser,
+                pass: emailPass
+            }
+        });
+    }
+
     return nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
+            user: emailUser,
+            pass: emailPass
         }
     });
 };
@@ -148,32 +171,41 @@ export const sendBulkEmail = async (subject, body, filter, type = 'quick_message
         const transporter = createTransporter();
         const results = [];
 
-        // Send emails to all filtered users
-        for (const user of users) {
-            try {
-                const mailOptions = {
-                    from: {
-                        name: 'Alumnihub - DDIT',
-                        address: process.env.EMAIL_USER
-                    },
-                    to: user.email,
-                    subject: subject,
-                    html: createEmailTemplate(subject, body)
-                };
+        // Send emails in bounded parallel batches to avoid long request times.
+        const chunkSize = 10;
+        for (let i = 0; i < users.length; i += chunkSize) {
+            const chunk = users.slice(i, i + chunkSize);
 
-                const result = await transporter.sendMail(mailOptions);
-                results.push({ 
-                    email: user.email, 
-                    success: true, 
-                    messageId: result.messageId 
-                });
-            } catch (error) {
-                results.push({ 
-                    email: user.email, 
-                    success: false, 
-                    error: error.message 
-                });
-            }
+            const chunkResults = await Promise.all(
+                chunk.map(async (user) => {
+                    try {
+                        const mailOptions = {
+                            from: {
+                                name: 'Alumnihub - DDIT',
+                                address: process.env.EMAIL_USER
+                            },
+                            to: user.email,
+                            subject: subject,
+                            html: createEmailTemplate(subject, body)
+                        };
+
+                        const result = await transporter.sendMail(mailOptions);
+                        return {
+                            email: user.email,
+                            success: true,
+                            messageId: result.messageId
+                        };
+                    } catch (error) {
+                        return {
+                            email: user.email,
+                            success: false,
+                            error: error.message
+                        };
+                    }
+                })
+            );
+
+            results.push(...chunkResults);
         }
 
         const successCount = results.filter(r => r.success).length;

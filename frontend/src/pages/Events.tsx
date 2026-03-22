@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Calendar, MapPin, Users, Clock, Search, CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2, Check } from "lucide-react";
 import { StatusButton } from "@/components/ui/status-button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { InfoTag } from "@/components/ui/InfoTag";
 import { useToast } from "@/hooks/use-toast";
 import { eventService } from "@/services/ApiServices";
@@ -33,6 +41,7 @@ const ITEMS_PER_PAGE = 6;
 
 export default function Events() {
     const { toast } = useToast();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState("");
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,10 +50,23 @@ export default function Events() {
     const [registeredEvents, setRegisteredEvents] = useState<Set<string>>(new Set());
     const [activeEventPage, setActiveEventPage] = useState(0);
     const [pastEventPage, setPastEventPage] = useState(0);
+    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+    const [eventDetailsOpen, setEventDetailsOpen] = useState(false);
 
     useEffect(() => {
         fetchEvents();
     }, []);
+
+    useEffect(() => {
+        const eventId = searchParams.get("eventId");
+        if (!eventId || loading || events.length === 0) return;
+
+        const targetEvent = events.find((event) => event._id === eventId);
+        if (targetEvent) {
+            setSelectedEvent(targetEvent);
+            setEventDetailsOpen(true);
+        }
+    }, [searchParams, events, loading]);
 
     const fetchEvents = async () => {
         try {
@@ -262,6 +284,10 @@ export default function Events() {
             key={event._id}
             className="overflow-hidden border-border/30 bg-card animate-fade-in group flex flex-col h-full"
             style={{ animationDelay: `${index * 100}ms` }}
+            onClick={() => {
+                setSelectedEvent(event);
+                setEventDetailsOpen(true);
+            }}
         >
             <CardHeader className="pb-1 pt-4 px-4">
                 <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 font-sans">
@@ -315,9 +341,12 @@ export default function Events() {
                         ? 'bg-red-500/10 text-red-600 hover:bg-red-500/25 hover:text-red-700 border border-red-500/20 hover:border-red-500/40 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/30 dark:hover:text-red-300'
                         : 'bg-green-500/10 text-green-600 hover:bg-green-500/25 hover:text-green-700 border border-green-500/20 hover:border-green-500/40 dark:bg-green-500/15 dark:text-green-400 dark:hover:bg-green-500/30 dark:hover:text-green-300'
                         }`}
-                    onClick={() => registeredEvents.has(event._id)
-                        ? handleLeaveEvent(event._id)
-                        : handleJoinEvent(event._id)
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        registeredEvents.has(event._id)
+                            ? handleLeaveEvent(event._id)
+                            : handleJoinEvent(event._id)
+                    }
                     }
                     disabled={
                         !registeredEvents.has(event._id) && 
@@ -528,6 +557,89 @@ export default function Events() {
                     )}
                 </div>
             )}
+
+            <Dialog
+                open={eventDetailsOpen}
+                onOpenChange={(open) => {
+                    setEventDetailsOpen(open);
+                    if (!open && searchParams.get("eventId")) {
+                        const nextParams = new URLSearchParams(searchParams);
+                        nextParams.delete("eventId");
+                        setSearchParams(nextParams);
+                    }
+                }}
+            >
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{selectedEvent?.title || "Event Details"}</DialogTitle>
+                        <DialogDescription>
+                            {selectedEvent ? `${formatDate(selectedEvent.date)} • ${selectedEvent.time || "Time TBD"}` : ""}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedEvent && (
+                        <div className="space-y-4">
+                            {selectedEvent.category && (
+                                <Badge variant="secondary" className="w-fit">{selectedEvent.category}</Badge>
+                            )}
+
+                            <p className="text-sm text-foreground/90 whitespace-pre-wrap">{selectedEvent.description}</p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <CalendarDays className="h-4 w-4 text-blue-500" />
+                                    <span>{formatDate(selectedEvent.date)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-purple-500" />
+                                    <span>{selectedEvent.time || "TBD"}</span>
+                                </div>
+                                {selectedEvent.location && (
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-teal-500" />
+                                        <span>{selectedEvent.location}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2">
+                                    <Users className="h-4 w-4 text-orange-500" />
+                                    <span>
+                                        {selectedEvent.participants.length}
+                                        {selectedEvent.maxAttendees ? ` / ${selectedEvent.maxAttendees}` : ""} participants
+                                    </span>
+                                </div>
+                            </div>
+
+                            <Button
+                                className="w-full"
+                                variant="outline"
+                                onClick={() => registeredEvents.has(selectedEvent._id)
+                                    ? handleLeaveEvent(selectedEvent._id)
+                                    : handleJoinEvent(selectedEvent._id)
+                                }
+                                disabled={
+                                    joiningEvent === selectedEvent._id ||
+                                    (!registeredEvents.has(selectedEvent._id) &&
+                                        selectedEvent.maxAttendees !== undefined &&
+                                        selectedEvent.participants.length >= selectedEvent.maxAttendees)
+                                }
+                            >
+                                {joiningEvent === selectedEvent._id ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                        {registeredEvents.has(selectedEvent._id) ? "Leaving..." : "Joining..."}
+                                    </>
+                                ) : registeredEvents.has(selectedEvent._id) ? (
+                                    "Leave Event"
+                                ) : (selectedEvent.maxAttendees && selectedEvent.participants.length >= selectedEvent.maxAttendees) ? (
+                                    "Event Full"
+                                ) : (
+                                    "Join Event"
+                                )}
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

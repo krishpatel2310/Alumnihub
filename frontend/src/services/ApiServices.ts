@@ -402,7 +402,9 @@ export const emailService = {
     filter: string;
     type?: string;
   }): Promise<ApiResponse> => {
-    return await api.post('/emails/sendEmail', emailData);
+    return await api.post('/emails/sendEmail', emailData, {
+      timeout: 180000
+    });
   },
 
   getEmailHistory: async (params?: {

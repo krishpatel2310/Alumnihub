@@ -1,9 +1,16 @@
-import { Calendar, Users, Briefcase, TrendingUp, Heart, MessageCircle, Loader2, Building2, DollarSign } from "lucide-react";
+import { Calendar, Users, Briefcase, Heart, MessageCircle, Building2 } from "lucide-react";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminService, eventService, userService, jobService, donationService, connectionService, communicationService } from "@/services/ApiServices";
@@ -49,7 +56,15 @@ interface Alumni {
   role?: string;
   graduationYear?: string;
   course?: string;
+  company?: string;
+  currentPosition?: string;
+  location?: string;
   isVerified?: boolean;
+}
+
+interface TopCompany {
+  name: string;
+  count: number;
 }
 
 interface Job {
@@ -82,8 +97,12 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [recentEvents, setRecentEvents] = useState<Event[]>([]);
   const [featuredAlumni, setFeaturedAlumni] = useState<Alumni[]>([]);
+  const [allAlumni, setAllAlumni] = useState<Alumni[]>([]);
   const [recentJobs, setRecentJobs] = useState<Job[]>([]);
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
+  const [topCompanies, setTopCompanies] = useState<TopCompany[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false);
   const [donationStats, setDonationStats] = useState<DonationStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,8 +117,10 @@ export default function Dashboard() {
         stats: typeof stats;
         recentEvents: typeof recentEvents;
         featuredAlumni: typeof featuredAlumni;
+        allAlumni: typeof allAlumni;
         recentJobs: typeof recentJobs;
         recentPosts: typeof recentPosts;
+        topCompanies: typeof topCompanies;
         donationStats: typeof donationStats;
       }>(CACHE_KEYS.DASHBOARD_DATA);
 
@@ -108,8 +129,10 @@ export default function Dashboard() {
         setStats(cachedData.stats);
         setRecentEvents(cachedData.recentEvents);
         setFeaturedAlumni(cachedData.featuredAlumni);
+        setAllAlumni(cachedData.allAlumni || []);
         setRecentJobs(cachedData.recentJobs);
         setRecentPosts(cachedData.recentPosts);
+        setTopCompanies(cachedData.topCompanies || []);
         setDonationStats(cachedData.donationStats);
         setLoading(false);
 
@@ -142,11 +165,30 @@ export default function Dashboard() {
       // Process Alumni Data
       let verifiedAlumni: Alumni[] = [];
       let featured: Alumni[] = [];
+      let companiesList: TopCompany[] = [];
       if (alumniResult.status === 'fulfilled') {
         const alumniResponse = alumniResult.value;
         const allUsers = Array.isArray(alumniResponse?.data) ? alumniResponse.data : [];
         verifiedAlumni = allUsers.filter((user: Alumni) => user.role?.toLowerCase() === "alumni");
         featured = verifiedAlumni.sort(() => 0.5 - Math.random()).slice(0, 3);
+        setAllAlumni(verifiedAlumni);
+
+        const companyCounts = verifiedAlumni.reduce((acc: Record<string, number>, alumni: Alumni) => {
+          const companyName = alumni.company?.trim();
+          if (!companyName) return acc;
+          acc[companyName] = (acc[companyName] || 0) + 1;
+          return acc;
+        }, {});
+
+        companiesList = Object.entries(companyCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([name, count]) => ({ name, count }));
+
+        setTopCompanies(companiesList);
+      } else {
+        setTopCompanies([]);
+        setAllAlumni([]);
       }
 
       // Process Events Data
@@ -243,8 +285,10 @@ export default function Dashboard() {
         stats: newStats,
         recentEvents: upcomingEvents,
         featuredAlumni: featured,
+        allAlumni: verifiedAlumni,
         recentJobs: recentJobsList,
         recentPosts: recentPostsList,
+        topCompanies: companiesList,
         donationStats: donationStatsData
       }, CACHE_TTL.MEDIUM);
 
@@ -473,7 +517,14 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {recentEvents.length > 0 ? (
                     recentEvents.map((event, index) => (
-                      <div key={event._id} className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
+                      <div
+                        key={event._id}
+                        className="flex items-center justify-between p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/15 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/events?eventId=${event._id}`);
+                        }}
+                      >
                         <div className="flex-1">
                           <h4 className="font-medium">{event.title}</h4>
                           <p className="text-sm text-muted-foreground">
@@ -513,7 +564,14 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {featuredAlumni.length > 0 ? (
                     featuredAlumni.map((alumni) => (
-                      <div key={alumni._id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div
+                        key={alumni._id}
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/alumni?userId=${alumni._id}`);
+                        }}
+                      >
                         <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-medium text-primary">
                             {getAlumniInitials(alumni.name)}
@@ -552,7 +610,14 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {recentJobs.length > 0 ? (
                   recentJobs.map((job) => (
-                    <div key={job._id} className="p-3 bg-muted/50 rounded-lg">
+                    <div
+                      key={job._id}
+                      className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/jobs?jobId=${job._id}`);
+                      }}
+                    >
                       <h4 className="font-medium text-sm">{job.title}</h4>
                       <p className="text-xs text-muted-foreground">
                         {job.company} • ₹{(job.salary / 1000).toFixed(0)}k
@@ -576,91 +641,43 @@ export default function Dashboard() {
               size="md"
               className="h-full"
             >
-              <div className="grid grid-cols-2 gap-4 h-full grid-rows-3">
-                <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <CompanyLogo
-                    companyName="TCS"
-                    domain="tcs.com"
-                    containerClassName="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-sm border border-border/50"
-                    className="w-12 h-8 object-contain"
-                    fallbackClassName="text-blue-600 font-bold text-lg"
-                  />
-                  <div>
-                    <p className="font-semibold text-base mb-0.5">TCS</p>
-                    <p className="text-sm text-muted-foreground">250+ alumni</p>
+              <div className="grid grid-cols-1 gap-3 h-full sm:grid-cols-2">
+                {topCompanies.length > 0 ? topCompanies.map((company) => (
+                  <div
+                    key={company.name}
+                    className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedCompany(company.name);
+                      setCompanyDetailsOpen(true);
+                    }}
+                  >
+                    <CompanyLogo
+                      companyName={company.name}
+                      containerClassName="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-sm border border-border/50"
+                      className="w-12 h-8 object-contain"
+                      fallbackClassName="text-blue-600 font-bold text-lg"
+                    />
+                    <div>
+                      <p className="font-semibold text-base mb-0.5">{company.name}</p>
+                      <p className="text-sm text-muted-foreground">{company.count} alumni</p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <CompanyLogo
-                    companyName="Infosys"
-                    domain="infosys.com"
-                    containerClassName="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-sm border border-border/50"
-                    className="w-12 h-8 object-contain"
-                    fallbackClassName="text-blue-600 font-bold text-lg"
-                  />
-                  <div>
-                    <p className="font-semibold text-base mb-0.5">Infosys</p>
-                    <p className="text-sm text-muted-foreground">180+ alumni</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <CompanyLogo
-                    companyName="Google"
-                    domain="google.com"
-                    containerClassName="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-sm border border-border/50"
-                    className="w-12 h-8 object-contain"
-                    fallbackClassName="text-blue-600 font-bold text-lg"
-                  />
-                  <div>
-                    <p className="font-semibold text-base mb-0.5">Google</p>
-                    <p className="text-sm text-muted-foreground">45+ alumni</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <CompanyLogo
-                    companyName="Microsoft"
-                    domain="microsoft.com"
-                    containerClassName="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-sm border border-border/50"
-                    className="w-12 h-8 object-contain"
-                    fallbackClassName="text-blue-600 font-bold text-lg"
-                  />
-                  <div>
-                    <p className="font-semibold text-base mb-0.5">Microsoft</p>
-                    <p className="text-sm text-muted-foreground">38+ alumni</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <CompanyLogo
-                    companyName="IBM"
-                    domain="ibm.com"
-                    containerClassName="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-sm border border-border/50"
-                    className="w-12 h-8 object-contain"
-                    fallbackClassName="text-blue-800 font-bold text-lg"
-                  />
-                  <div>
-                    <p className="font-semibold text-base mb-0.5">IBM</p>
-                    <p className="text-sm text-muted-foreground">95+ alumni</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <CompanyLogo
-                    companyName="Wipro"
-                    domain="wipro.com"
-                    containerClassName="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-sm border border-border/50"
-                    className="w-12 h-8 object-contain"
-                    fallbackClassName="text-purple-600 font-bold text-lg"
-                  />
-                  <div>
-                    <p className="font-semibold text-base mb-0.5">Wipro</p>
-                    <p className="text-sm text-muted-foreground">120+ alumni</p>
-                  </div>
-                </div>
+                )) : (
+                  <p className="text-muted-foreground text-center py-8 sm:col-span-2">No company data available yet</p>
+                )}
               </div>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/alumni');
+                }}
+                size="sm"
+                className="w-full mt-2 rounded-full bg-orange-500/10 text-orange-600 hover:bg-orange-500/25 hover:text-orange-700 border border-orange-500/20 hover:border-orange-500/40 font-semibold focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-orange-500/15 dark:text-orange-400 dark:hover:bg-orange-500/30 dark:hover:text-orange-300"
+                variant="ghost"
+              >
+                View All Alumni
+              </Button>
             </BentoCard>
 
             <BentoCard
@@ -675,7 +692,14 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {recentPosts.length > 0 ? (
                   recentPosts.map((post) => (
-                    <div key={post._id} className="flex items-start space-x-3 p-2 rounded-lg">
+                    <div
+                      key={post._id}
+                      className="flex items-start space-x-3 p-2 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/communications/post/${post._id}`);
+                      }}
+                    >
                       <div className="w-8 h-8 bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 rounded-full flex items-center justify-center flex-shrink-0">
                         <MessageCircle className="w-4 h-4 text-cyan-500" />
                       </div>
@@ -753,6 +777,45 @@ export default function Dashboard() {
           </div>
         </>
       )}
+
+      <Dialog open={companyDetailsOpen} onOpenChange={setCompanyDetailsOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedCompany || "Company"} Alumni</DialogTitle>
+            <DialogDescription>
+              Alumni currently working at {selectedCompany || "this company"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {allAlumni
+              .filter((alumni) => (alumni.company || '').trim().toLowerCase() === (selectedCompany || '').trim().toLowerCase())
+              .map((alumni) => (
+                <div key={alumni._id} className="p-3 border border-border/50 rounded-lg bg-muted/20">
+                  <p className="font-semibold">{alumni.name}</p>
+                  <p className="text-sm text-muted-foreground">{alumni.currentPosition || alumni.course || 'Alumni'}</p>
+                  <p className="text-xs text-muted-foreground">{alumni.email}</p>
+                  {alumni.location && <p className="text-xs text-muted-foreground">{alumni.location}</p>}
+                </div>
+              ))}
+
+            {allAlumni.filter((alumni) => (alumni.company || '').trim().toLowerCase() === (selectedCompany || '').trim().toLowerCase()).length === 0 && (
+              <p className="text-muted-foreground text-center py-6">No alumni details found for this company.</p>
+            )}
+          </div>
+
+          <Button
+            onClick={() => {
+              setCompanyDetailsOpen(false);
+              navigate('/alumni');
+            }}
+            className="w-full"
+            variant="outline"
+          >
+            Open Alumni Directory
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
